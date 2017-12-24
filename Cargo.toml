@@ -1,0 +1,6 @@
+[package]
+name = "crypto-pals"
+version = "0.1.0"
+authors = ["Michael Blume <blume.mike@gmail.com>"]
+
+[dependencies]
