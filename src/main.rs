@@ -1,8 +1,10 @@
 use std::io::{self, Read, Write};
 
+const num_windows: usize = 128;
+
 fn main() {
-    let mut buffer = [0; 600];
-    let mut out_buffer = [0; 400];
+    let mut buffer = [0; 6 * num_windows];
+    let mut out_buffer = [0; 4 * num_windows];
     let mut b64_table = [0; 64];
     assemble_b64_table(&mut b64_table);
 
@@ -17,7 +19,7 @@ fn main() {
                     };
                     print_as_hex(actual_l, &buffer, &mut out_buffer, &b64_table);
                 }
-                if l == 600 {
+                if l == 6 * num_windows {
                     continue;
                 }
             }
@@ -29,7 +31,7 @@ fn main() {
 
 fn test_main() {
     let s = "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d";
-    let mut out_buffer = [0; 200];
+    let mut out_buffer = [0; 4 * num_windows];
     let mut b64_table = [0; 64];
     assemble_b64_table(&mut b64_table);
     print_as_hex(s.len(), s.as_bytes(), &mut out_buffer, &b64_table);
