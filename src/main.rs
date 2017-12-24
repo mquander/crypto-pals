@@ -16,7 +16,8 @@ fn main() {
                     } else {
                         l - 1
                     };
-                    print_as_hex(actual_l, &buffer, &mut out_buffer, &b64_table);
+                    let out_len = print_as_hex(actual_l, &buffer, &mut out_buffer, &b64_table);
+                    io::stdout().write(&out_buffer[..out_len]);
                 }
                 if l == 6 * NUM_WINDOWS {
                     continue;
@@ -57,7 +58,7 @@ fn assemble_b64_table() -> [u8; 64] {
     table
 }
 
-fn print_as_hex(l: usize, in_buffer: &[u8], out_buffer: &mut [u8], b64_table: &[u8]) {
+fn print_as_hex(l: usize, in_buffer: &[u8], out_buffer: &mut [u8], b64_table: &[u8]) -> usize {
     let triplet_count = (l + 5) / 6;
     for i in 0..triplet_count {
         let index = i * 6;
@@ -83,9 +84,8 @@ fn print_as_hex(l: usize, in_buffer: &[u8], out_buffer: &mut [u8], b64_table: &[
             }
 
         }
-
     }
-    io::stdout().write(&out_buffer[0..(triplet_count * 4)]);
+    triplet_count * 4
 }
 
 #[cfg(test)]
@@ -98,8 +98,7 @@ mod tests {
         let output = "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t";
         let mut out_buffer = [0; 4 * NUM_WINDOWS];
         let b64_table = assemble_b64_table();
-        print_as_hex(input.len(), input.as_bytes(), &mut out_buffer, &b64_table);
-        let output_len = out_buffer.iter().position(|&b| b == 0).unwrap();
+        let output_len = print_as_hex(input.len(), input.as_bytes(), &mut out_buffer, &b64_table);
         assert_eq!(std::str::from_utf8(&out_buffer[..output_len]).unwrap(), output);
     }
 }
