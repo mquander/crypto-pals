@@ -5,8 +5,7 @@ const NUM_WINDOWS: usize = 128;
 fn main() {
     let mut buffer = [0; 6 * NUM_WINDOWS];
     let mut out_buffer = [0; 4 * NUM_WINDOWS];
-    let mut b64_table = [0; 64];
-    assemble_b64_table(&mut b64_table);
+    let b64_table = assemble_b64_table();
 
     loop {
         match io::stdin().read(&mut buffer) {
@@ -42,19 +41,20 @@ fn hex_byte_to_nibble(hex_byte: u8) -> u8 {
     }
 }
 
-fn assemble_b64_table(table: &mut [u8]) {
+fn assemble_b64_table() -> [u8; 64] {
+    let mut table = [0; 64];
     for i in 0..26 {
         table[i] = i as u8 + 'A' as u8;
     }
     for i in 0..26 {
         table[i + 26] = i as u8 + 'a' as u8
     }
-
     for i in 0..10 {
         table[i + 52] = i as u8 + '0' as u8;
     }
     table[62] = '+' as u8;
     table[63] = '/' as u8;
+    table
 }
 
 fn print_as_hex(l: usize, in_buffer: &[u8], out_buffer: &mut [u8], b64_table: &[u8]) {
@@ -97,8 +97,7 @@ mod tests {
         let input = "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d";
         let output = "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t";
         let mut out_buffer = [0; 4 * NUM_WINDOWS];
-        let mut b64_table = [0; 64];
-        assemble_b64_table(&mut b64_table);
+        let b64_table = assemble_b64_table();
         print_as_hex(input.len(), input.as_bytes(), &mut out_buffer, &b64_table);
         let output_len = out_buffer.iter().position(|&b| b == 0).unwrap();
         assert_eq!(std::str::from_utf8(&out_buffer[..output_len]).unwrap(), output);
