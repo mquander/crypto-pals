@@ -17,9 +17,8 @@ fn hex_to_b64<T, U>(reader: &mut T, writer: &mut U) -> Result<(), Box<Error>> wh
         match buffer[..l].iter().rposition(|&b| (b as char).is_digit(16)) {
             None => { break; } // we read nothing but terminators
             Some(pos) => {     // pos is the index of the last hex digit
-                let actual_l = pos + 1;
-                writer.write(&print_as_hex(actual_l, &buffer, &b64_table))?;
-                if actual_l < l {
+                writer.write(&sextet_to_b64(&buffer[..pos+1], &b64_table))?;
+                if pos+1 < l {
                     break;
                 }
             }
@@ -44,25 +43,23 @@ fn assemble_b64_table() -> [u8; 64] {
     table
 }
 
-fn print_as_hex(l: usize, in_buffer: &[u8], b64_table: &[u8]) -> [u8; 4] {
+fn sextet_to_b64(sextet: &[u8], b64_table: &[u8]) -> [u8; 4] {
     let mut x: u32 = 0;
     let mut out_buffer = [0; 4];
     for i in 0..6 {
         x = x << 4;
-        if i < l {
-            let nibble = (in_buffer[i] as char).to_digit(16).expect("Non-hex digit found!");
-            x += nibble;
+        if i < sextet.len() {
+            x += (sextet[i] as char).to_digit(16).expect("Non-hex digit found!");
         }
     }
     for i in 0..4 {
-        let shift = (3 - i) * 6;
-        let shifted = x >> shift;
-        let char_val = shifted & 63;
-
-        if l / 2 >= i {
-            out_buffer[i] = b64_table[char_val as usize];
+        out_buffer[i] = if sextet.len() / 2 >= i {
+            let shift = (3 - i) * 6;
+            let shifted = x >> shift;
+            let char_val = shifted & 63;
+            b64_table[char_val as usize]
         } else {
-            out_buffer[i] = '=' as u8;
+            b'='
         }
     }
     out_buffer
@@ -76,7 +73,7 @@ mod tests {
     fn test_main() {
         let mut input = BufReader::new("49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d".as_bytes());
         let mut output = Vec::new();
-        hex_to_b64(&mut input, &mut output);
+        hex_to_b64(&mut input, &mut output).expect("Failed to write output!");
         assert_eq!(String::from_utf8(output).unwrap(), "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t");
     }
 }
