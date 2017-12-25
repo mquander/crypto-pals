@@ -86,11 +86,9 @@ mod tests {
 
     #[test]
     fn test_main() {
-        let input = "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d";
-        let output = "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t";
-        let mut out_buffer = [0; 4 * NUM_WINDOWS];
-        let b64_table = assemble_b64_table();
-        let output_len = print_as_hex(input.len(), input.as_bytes(), &mut out_buffer, &b64_table);
-        assert_eq!(std::str::from_utf8(&out_buffer[..output_len]).unwrap(), output);
+        let mut input = BufReader::new("49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d".as_bytes());
+        let mut output = Vec::new();
+        hex_to_b64(&mut input, &mut output);
+        assert_eq!(String::from_utf8(output).unwrap(), "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t");
     }
 }
