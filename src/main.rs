@@ -30,10 +30,6 @@ fn hex_to_b64<T, U>(reader: &mut T, writer: &mut U) -> Result<(), Box<Error>> wh
     Ok(())
 }
 
-fn hex_byte_to_nibble(hex_byte: u8) -> u8 {
-    (hex_byte as char).to_digit(16).unwrap() as u8
-}
-
 fn assemble_b64_table() -> [u8; 64] {
     let mut table = [0; 64];
     for i in 0..26 {
@@ -59,7 +55,7 @@ fn print_as_hex(l: usize, in_buffer: &[u8], out_buffer: &mut [u8], b64_table: &[
             x = x << 4;
             let next = index + offset;
             if next < l {
-                let nibble = hex_byte_to_nibble(in_buffer[next]) as u32;
+                let nibble = (in_buffer[next] as char).to_digit(16).expect("Non-hex digit found!");
                 x += nibble;
             }
         }
