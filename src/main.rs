@@ -11,7 +11,6 @@ fn main() {
 
 fn hex_to_b64<T, U>(reader: &mut T, writer: &mut U) -> Result<(), Box<Error>> where T: Read, U: Write {
     let mut buffer = [0; 6];
-    let mut out_buffer = [0; 4];
     let b64_table = assemble_b64_table();
     loop {
         let l = reader.read(&mut buffer)?;
@@ -19,8 +18,7 @@ fn hex_to_b64<T, U>(reader: &mut T, writer: &mut U) -> Result<(), Box<Error>> wh
             None => { break; } // we read nothing but terminators
             Some(pos) => {     // pos is the index of the last hex digit
                 let actual_l = pos + 1;
-                let out_len = print_as_hex(actual_l, &buffer, &mut out_buffer, &b64_table);
-                writer.write(&out_buffer[..out_len])?;
+                writer.write(&print_as_hex(actual_l, &buffer, &b64_table))?;
                 if actual_l < l {
                     break;
                 }
@@ -46,34 +44,28 @@ fn assemble_b64_table() -> [u8; 64] {
     table
 }
 
-fn print_as_hex(l: usize, in_buffer: &[u8], out_buffer: &mut [u8], b64_table: &[u8]) -> usize {
-    let triplet_count = (l + 5) / 6;
-    for i in 0..triplet_count {
-        let index = i * 6;
-        let mut x: u32 = 0;
-        for offset in 0..6 {
-            x = x << 4;
-            let next = index + offset;
-            if next < l {
-                let nibble = (in_buffer[next] as char).to_digit(16).expect("Non-hex digit found!");
-                x += nibble;
-            }
-        }
-        for sextet in 0..4 {
-            let shift = (3 - sextet) * 6;
-            let shifted = x >> shift;
-            let char_val = shifted & 63;
-            let out_index = i * 4 + sextet ;
-
-            if (l - index) / 2 >= sextet {
-                out_buffer[out_index] = b64_table[char_val as usize];
-            } else {
-                out_buffer[out_index] = '=' as u8;
-            }
-
+fn print_as_hex(l: usize, in_buffer: &[u8], b64_table: &[u8]) -> [u8; 4] {
+    let mut x: u32 = 0;
+    let mut out_buffer = [0; 4];
+    for i in 0..6 {
+        x = x << 4;
+        if i < l {
+            let nibble = (in_buffer[i] as char).to_digit(16).expect("Non-hex digit found!");
+            x += nibble;
         }
     }
-    triplet_count * 4
+    for i in 0..4 {
+        let shift = (3 - i) * 6;
+        let shifted = x >> shift;
+        let char_val = shifted & 63;
+
+        if l / 2 >= i {
+            out_buffer[i] = b64_table[char_val as usize];
+        } else {
+            out_buffer[i] = '=' as u8;
+        }
+    }
+    out_buffer
 }
 
 #[cfg(test)]
