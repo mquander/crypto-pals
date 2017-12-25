@@ -1,31 +1,33 @@
 use std::io::{self, BufReader, BufWriter, Read, Write};
-
-const NUM_WINDOWS: usize = 128;
+use std::error::Error;
 
 fn main() {
+    let mut reader = BufReader::new(io::stdin());
+    let mut writer = BufWriter::new(io::stdout());
+    if let Err(e) = hex_to_b64(&mut reader, &mut writer) {
+        println!("=( {}", e);
+    }
+}
+
+fn hex_to_b64<T, U>(reader: &mut T, writer: &mut U) -> Result<(), Box<Error>> where T: Read, U: Write {
     let mut buffer = [0; 6];
     let mut out_buffer = [0; 4];
     let b64_table = assemble_b64_table();
-    let mut reader = BufReader::new(io::stdin());
-    let mut writer = BufWriter::new(io::stdout());
     loop {
-        match reader.read(&mut buffer) {
-            Ok(l) => {
-                match buffer[..l].iter().rposition(|&b| (b as char).is_digit(16)) {
-                    None => { break; }
-                    Some(pos) => {
-                        let actual_l = pos + 1;
-                        let out_len = print_as_hex(actual_l, &buffer, &mut out_buffer, &b64_table);
-                        writer.write(&out_buffer[..out_len]);
-                        if actual_l < l {
-                            break;
-                        }
-                    }
+        let l = reader.read(&mut buffer)?;
+        match buffer[..l].iter().rposition(|&b| (b as char).is_digit(16)) {
+            None => { break; } // we read nothing but terminators
+            Some(pos) => {     // pos is the index of the last hex digit
+                let actual_l = pos + 1;
+                let out_len = print_as_hex(actual_l, &buffer, &mut out_buffer, &b64_table);
+                writer.write(&out_buffer[..out_len])?;
+                if actual_l < l {
+                    break;
                 }
             }
-            Err(l) => println!("=( {}", l),
         }
     }
+    Ok(())
 }
 
 fn hex_byte_to_nibble(hex_byte: u8) -> u8 {
