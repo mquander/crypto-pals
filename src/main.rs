@@ -31,16 +31,7 @@ fn hex_to_b64<T, U>(reader: &mut T, writer: &mut U) -> Result<(), Box<Error>> wh
 }
 
 fn hex_byte_to_nibble(hex_byte: u8) -> u8 {
-    if hex_byte > 96 {
-        // lower case letter
-        hex_byte - 87
-    } else if hex_byte > 64 {
-        // upper case letter
-        hex_byte - 55
-    } else {
-        // digit
-        hex_byte - 48
-    }
+    (hex_byte as char).to_digit(16).unwrap() as u8
 }
 
 fn assemble_b64_table() -> [u8; 64] {
