@@ -2,13 +2,13 @@
 name = "crypto-pals"
 version = "0.1.0"
 dependencies = [
- "lazy_static 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "data-encoding 2.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
-name = "lazy_static"
-version = "1.0.0"
+name = "data-encoding"
+version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [metadata]
-"checksum lazy_static 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "c8f31047daa365f19be14b47c29df4f7c3b581832407daabe6ae77397619237d"
+"checksum data-encoding 2.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "099d2591f809713931cd770f2bdf4b8a4d2eb7314bc762da4c375ecaa74af80f"
