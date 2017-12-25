@@ -1,13 +1,18 @@
+#![feature(inclusive_range_syntax)]
+
 extern crate data_encoding;
 
 use std::io::{self, Read, Write};
+use std::iter;
+use std::str;
 use data_encoding::{DecodeError, BASE64, HEXLOWER};
 
 fn main() {
-    let mut input = Vec::new();
-    io::stdin().read_to_end(&mut input).expect("Error reading input!");
-    let output = hex_to_b64(&input).expect("Invalid input!");
-    io::stdout().write_all(output.as_bytes()).expect("Error writing to output!");
+    let input = HEXLOWER.decode(b"1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736").unwrap();
+    let keys_to_test = 0..=255;
+    let outputs = keys_to_test.clone().map(|k| xor(&input, &iter::repeat(k).take(input.len()).collect::<Vec<u8>>()));
+    let (key, text) = keys_to_test.zip(outputs).max_by_key(|&(k, ref out)| score_english(out)).unwrap();
+    println!("{} {:?}", key, str::from_utf8(&text));
 }
 
 pub fn hex_to_b64(input: &[u8]) -> Result<String, DecodeError> {
@@ -16,6 +21,15 @@ pub fn hex_to_b64(input: &[u8]) -> Result<String, DecodeError> {
 
 pub fn xor(left: &[u8], right: &[u8]) -> Vec<u8> {
     left.iter().zip(right.iter()).map(|(&a, &b)| a ^ b).collect()
+}
+
+pub fn score_english(input: &[u8]) -> u32 {
+    match str::from_utf8(input) {
+        Err(_) => 0,
+        Ok(text) => {
+            text.chars().filter(|ch| ch.is_alphabetic()).count() as u32
+        }
+    }
 }
 
 #[cfg(test)]
