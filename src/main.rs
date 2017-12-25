@@ -1,31 +1,30 @@
-use std::io::{self, Read, Write};
+use std::io::{self, BufReader, BufWriter, Read, Write};
 
 const NUM_WINDOWS: usize = 128;
 
 fn main() {
-    let mut buffer = [0; 6 * NUM_WINDOWS];
-    let mut out_buffer = [0; 4 * NUM_WINDOWS];
+    let mut buffer = [0; 6];
+    let mut out_buffer = [0; 4];
     let b64_table = assemble_b64_table();
-
+    let mut reader = BufReader::new(io::stdin());
+    let mut writer = BufWriter::new(io::stdout());
     loop {
-        match io::stdin().read(&mut buffer) {
+        match reader.read(&mut buffer) {
             Ok(l) => {
-                if l > 0 {
-                    let actual_l = if (buffer[l - 1] as char).is_alphanumeric() {
-                        l
-                    } else {
-                        l - 1
-                    };
-                    let out_len = print_as_hex(actual_l, &buffer, &mut out_buffer, &b64_table);
-                    io::stdout().write(&out_buffer[..out_len]);
-                }
-                if l == 6 * NUM_WINDOWS {
-                    continue;
+                match buffer[..l].iter().rposition(|&b| (b as char).is_digit(16)) {
+                    None => { break; }
+                    Some(pos) => {
+                        let actual_l = pos + 1;
+                        let out_len = print_as_hex(actual_l, &buffer, &mut out_buffer, &b64_table);
+                        writer.write(&out_buffer[..out_len]);
+                        if actual_l < l {
+                            break;
+                        }
+                    }
                 }
             }
             Err(l) => println!("=( {}", l),
         }
-        break;
     }
 }
 
