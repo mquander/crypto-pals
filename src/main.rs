@@ -1,7 +1,9 @@
 #![feature(inclusive_range_syntax)]
 #![feature(conservative_impl_trait)]
+#![feature(iterator_step_by)]
 
 extern crate data_encoding;
+extern crate crypto;
 
 use std::str;
 use data_encoding::{DecodeError, BASE64, HEXLOWER};
@@ -81,19 +83,13 @@ fn main() {
     // 2. for each offset from 0..keysize, figure out the key byte at that offset via
     // frequency analysis on plaintext output for every possible key byte
     let mut reconstructed_key = Vec::with_capacity(best_keysize);
+    let key_candidates: Vec<_> = (0..=255).map(|k| [k]).collect();
     let n_blocks = ciphertext.len() / best_keysize;
     for i in 0..best_keysize {
-        let mut plaintext_bytes = Vec::with_capacity(n_blocks);
-        for block in ciphertext.chunks(best_keysize) {
-            if let Some(b) = block.get(i) {
-                plaintext_bytes.push(*b);
-            }
-        }
-        let key_candidates: Vec<_> = (0..=255).map(|k| [k]).collect();
-        let mut decryption_candidates = Vec::with_capacity(256);
+        let plaintext_bytes: Vec<_> = ciphertext.iter().skip(i).step_by(best_keysize).cloned().collect();
+        let mut decryption_candidates = Vec::with_capacity(key_candidates.len());
         for k in &key_candidates {
-            let candidate = try_decrypt(&plaintext_bytes, k);
-            decryption_candidates.push(candidate);
+            decryption_candidates.push(try_decrypt(&plaintext_bytes, k));
         }
         let best_decryption_candidate = decryption_candidates.iter().max_by_key(|x| x.score).unwrap();
         reconstructed_key.push(best_decryption_candidate.key[0]);

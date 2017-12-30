@@ -6,3 +6,4 @@ authors = ["Marshall Quander <marshall@quander.me>"]
 [dependencies]
 data-encoding = "2.1.0"
 lazy_static = "1.0"
+rust-crypto = "0.2"
